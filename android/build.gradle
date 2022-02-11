@@ -2,7 +2,7 @@ group 'it.aesys.flutter_video_cast'
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.6.10'
+    ext.kotlin_version = '1.5.30'
     repositories {
         google()
         mavenCentral()
@@ -44,5 +44,5 @@ dependencies {
 
     //ChromeCast dependencies
     implementation 'com.google.android.gms:play-services-cast-framework:21.0.1'
-    implementation 'com.google.android.exoplayer:extension-cast:2.16.1'
+    implementation 'com.google.android.exoplayer:extension-cast:2.15.1'
 }
