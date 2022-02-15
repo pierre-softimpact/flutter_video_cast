@@ -87,12 +87,9 @@ class _CastSampleState extends State<CastSample> {
           children: <Widget>[
             _RoundIconButton(
               icon: Icons.replay_10,
-              onPressed: () =>
-                  _controller.seek(relative: true, interval: -10.0),
+              onPressed: () => _controller.seek(relative: true, interval: -10.0),
             ),
-            _RoundIconButton(
-                icon: _playing! ? Icons.pause : Icons.play_arrow,
-                onPressed: _playPause),
+            _RoundIconButton(icon: _playing! ? Icons.pause : Icons.play_arrow, onPressed: _playPause),
             _RoundIconButton(
               icon: Icons.forward_10,
               onPressed: () => _controller.seek(relative: true, interval: 10.0),
@@ -129,14 +126,12 @@ class _CastSampleState extends State<CastSample> {
   formatHour(Duration d) => d.toString().split('.').first.padLeft(8, "0");
 
   double _sliderValue() {
-    return position.inSeconds /
-        (duration.inSeconds == 0 ? 5 : duration.inSeconds);
+    return position.inSeconds / (duration.inSeconds == 0 ? 5 : duration.inSeconds);
   }
 
   _changeSliderValue(double value) {
     position = Duration(
-      seconds:
-          ((duration.inSeconds == 0 ? 5 : duration.inSeconds) * value).toInt(),
+      seconds: ((duration.inSeconds == 0 ? 5 : duration.inSeconds) * value).toInt(),
     );
     _changePosition(position);
     setState(() {});
@@ -178,10 +173,13 @@ class _CastSampleState extends State<CastSample> {
     );
   }
 
-  Future<void> _onSessionEnded() async {
+  Future<void> _onSessionEnded(Duration? lastPosition) async {
     _tickerSubscription?.cancel();
     position = Duration();
     duration = Duration();
+
+    final Duration _lastPosition = lastPosition ?? Duration.zero;
+    debugPrint("last position -> $_lastPosition");
     setState(() => _state = AppState.idle);
   }
 

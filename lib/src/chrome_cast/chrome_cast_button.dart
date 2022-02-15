@@ -21,9 +21,7 @@ class ChromeCastButton extends StatelessWidget {
     this.onSessionEnded,
     this.onRequestCompleted,
     this.onRequestFailed,
-  })  : assert(
-            defaultTargetPlatform == TargetPlatform.iOS ||
-                defaultTargetPlatform == TargetPlatform.android,
+  })  : assert(defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.android,
             '$defaultTargetPlatform is not supported by this plugin'),
         super(key: key);
 
@@ -43,7 +41,7 @@ class ChromeCastButton extends StatelessWidget {
   final VoidCallback? onSessionStarted;
 
   /// Called when a cast session has ended.
-  final VoidCallback? onSessionEnded;
+  final void Function(Duration? lastPosition)? onSessionEnded;
 
   /// Called when a cast request has successfully completed.
   final VoidCallback? onRequestCompleted;
@@ -72,24 +70,18 @@ class ChromeCastButton extends StatelessWidget {
       onButtonCreated!(controller);
     }
     if (onSessionStarted != null) {
-      _chromeCastPlatform
-          .onSessionStarted(id: id)
-          .listen((_) => onSessionStarted!());
+      _chromeCastPlatform.onSessionStarted(id: id).listen((_) => onSessionStarted!());
     }
     if (onSessionEnded != null) {
-      _chromeCastPlatform
-          .onSessionEnded(id: id)
-          .listen((_) => onSessionEnded!());
+      final Duration? lastPosition = await controller.position();
+
+      _chromeCastPlatform.onSessionEnded(id: id).listen((_) => onSessionEnded!(lastPosition));
     }
     if (onRequestCompleted != null) {
-      _chromeCastPlatform
-          .onRequestCompleted(id: id)
-          .listen((_) => onRequestCompleted!());
+      _chromeCastPlatform.onRequestCompleted(id: id).listen((_) => onRequestCompleted!());
     }
     if (onRequestFailed != null) {
-      _chromeCastPlatform
-          .onRequestFailed(id: id)
-          .listen((event) => onRequestFailed!(event.error));
+      _chromeCastPlatform.onRequestFailed(id: id).listen((event) => onRequestFailed!(event.error));
     }
   }
 }
