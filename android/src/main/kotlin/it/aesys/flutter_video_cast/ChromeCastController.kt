@@ -1,20 +1,24 @@
 package it.aesys.flutter_video_cast
 
 import android.content.Context
+import android.net.Uri
 import android.view.ContextThemeWrapper
 import androidx.mediarouter.app.MediaRouteButton
 import com.google.android.gms.cast.MediaInfo
 import com.google.android.gms.cast.MediaLoadOptions
+import com.google.android.gms.cast.MediaMetadata
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.Session
 import com.google.android.gms.cast.framework.SessionManagerListener
 import com.google.android.gms.common.api.PendingResult
 import com.google.android.gms.common.api.Status
+import com.google.android.gms.common.images.WebImage
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.platform.PlatformView
+import org.json.JSONObject
 
 class ChromeCastController(
     messenger: BinaryMessenger,
@@ -34,11 +38,32 @@ class ChromeCastController(
 
     private fun loadMedia(args: Any?) {
         if (args is Map<*, *>) {
-            val url = args["url"] as? String
-            val media = url?.let { MediaInfo.Builder(it).build() }
-            val options = MediaLoadOptions.Builder().build()
+            val url = args["url"] as? String ?: ""
+            val title = args["title"] as? String ?: ""
+            val subtitle = args["subtitle"] as? String ?: ""
+            val imageUrl = args["image"] as? String ?: ""
+            val contentType = args["contentType"] as? String ?: "videos/mp4"
+            val customData = (args["customData"] as Map<*, *>?)?.run {
+                JSONObject(this)
+            } ?: JSONObject()
+            val liveStream = args["live"] as? Boolean ?: false
+
+            val movieMetadata = MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE)
+
+            val streamType =
+                if (liveStream) MediaInfo.STREAM_TYPE_LIVE else MediaInfo.STREAM_TYPE_BUFFERED
+
+            movieMetadata.putString(MediaMetadata.KEY_TITLE, title)
+            movieMetadata.putString(MediaMetadata.KEY_SUBTITLE, subtitle)
+            movieMetadata.addImage(WebImage(Uri.parse(imageUrl)))
+            //movieMetadata.addImage(WebImage(Uri.parse(imageUrl)))
+
+            val media = MediaInfo.Builder(url).setStreamType(streamType).setContentType(contentType)
+                .setMetadata(movieMetadata).setCustomData(customData).build()
+            val options = MediaLoadOptions.Builder().setCustomData(customData).build()
             val request =
-                media?.let { sessionManager?.currentCastSession?.remoteMediaClient?.load(it, options) }
+                sessionManager?.currentCastSession?.remoteMediaClient?.load(media, options)
+
             request?.addStatusListener(this)
         }
     }

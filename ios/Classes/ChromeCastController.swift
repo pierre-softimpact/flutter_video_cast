@@ -109,25 +109,76 @@ class ChromeCastController: NSObject, FlutterPlatformView {
         case "chromeCast#endSession":
             endSession();
             result(nil)
+        case "chromeCast#setVolume":
+        setVolume(args: call.arguments)
         default:
             result(nil)
             break
         }
     }
 
-    private func loadMedia(args: Any?) {
+    // private func loadMedia(args: Any?) {
+    //     guard
+    //         let args = args as? [String: Any],
+    //         let url = args["url"] as? String,
+    //         let mediaUrl = URL(string: url) else {
+    //             print("Invalid URL")
+    //             return
+    //     }
+    //     let mediaInformation = GCKMediaInformationBuilder(contentURL: mediaUrl).build()
+    //     if let request = sessionManager.currentCastSession?.remoteMediaClient?.loadMedia(mediaInformation) {
+    //         request.delegate = self
+    //     }
+    // }
+
+     private func loadMedia(args: Any?) {
+#if canImport(GoogleCast)
         guard
             let args = args as? [String: Any],
             let url = args["url"] as? String,
             let mediaUrl = URL(string: url) else {
-                print("Invalid URL")
-                return
+            print("Invalid URL")
+            return
         }
-        let mediaInformation = GCKMediaInformationBuilder(contentURL: mediaUrl).build()
+        
+        let _title = args["title"] as? String
+        let _subtitle = args["subtitle"] as? String
+        let _image = args["image"] as? String
+        let live = args["live"] as? Bool
+        let customData = args["customData"] as? [AnyHashable: AnyHashable]
+        
+        let movieMetadata = GCKMediaMetadata()
+        
+        if let title = _title {
+            movieMetadata.setString(title, forKey: kGCKMetadataKeyTitle)
+        }
+        if let subtitle = _subtitle {
+            movieMetadata.setString(subtitle, forKey: kGCKMetadataKeySubtitle)
+        }
+        if let image = _image {
+            if let imageUrl = URL(string: image){
+                movieMetadata.addImage(GCKImage(url: imageUrl, width: 480, height: 360))
+            }
+        }
+        
+        let mediaInfoBuilder = GCKMediaInformationBuilder.init(contentURL: mediaUrl)
+        mediaInfoBuilder.streamType = .buffered
+        if let islive = live {
+            if islive {
+                mediaInfoBuilder.streamType = .live
+            }
+        }
+        mediaInfoBuilder.contentType = "video/mp4"
+        mediaInfoBuilder.metadata = movieMetadata
+        mediaInfoBuilder.customData = customData
+        let mediaInformation = mediaInfoBuilder.build()
+        
         if let request = sessionManager.currentCastSession?.remoteMediaClient?.loadMedia(mediaInformation) {
             request.delegate = self
         }
+#endif
     }
+    
 
     private func play() {
         if let request = sessionManager.currentCastSession?.remoteMediaClient?.play() {
@@ -152,6 +203,17 @@ class ChromeCastController: NSObject, FlutterPlatformView {
         seekOptions.relative = relative
         seekOptions.interval = interval
         if let request = sessionManager.currentCastSession?.remoteMediaClient?.seek(with: seekOptions) {
+            request.delegate = self
+        }
+    }
+
+ private func setVolume(args: Any?) {
+         guard
+            let args = args as? [String: Any],
+            let volume = args["volume"] as? Float else {
+                return
+        }
+        if let request = sessionManager.currentCastSession?.remoteMediaClient?.setStreamVolume(volume) {
             request.delegate = self
         }
     }
